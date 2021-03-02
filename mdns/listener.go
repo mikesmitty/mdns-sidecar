@@ -10,6 +10,10 @@ import (
 	"golang.org/x/net/ipv6"
 )
 
+// TODO: Add ipv6 support
+// TODO: Refactor this into something sensible
+// Inspired by github.com/hashicorp/mdns
+
 const (
 	ipv4mdns = "224.0.0.251"
 	ipv6mdns = "ff02::fb"
@@ -22,6 +26,9 @@ const (
 type Config struct {
 	Monitor string
 	Listen  string
+
+	// Defaulting to zero for now
+	MagicTTL int
 }
 
 type Server struct {
@@ -98,12 +105,17 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 			continue
 		}
 
-		// TODO: Check incoming packet TTL / avoid packet storm generation
-		if cm != nil {
-			fmt.Printf("ttl: %d src: %s dst: %s\n", cm.TTL, cm.Src, cm.Dst)
-		} else {
+		if cm == nil {
 			log.Debugf("Received no ControlMessage from packet")
+			continue
 		}
+
+		if cm.TTL == s.Config.MagicTTL {
+			log.Debugf("Discarding packet with magic TTL")
+			continue
+		}
+
+		// TODO: Host blocklist checking
 
 		msg := dns.Msg{}
 		err = msg.Unpack(b[:n])
