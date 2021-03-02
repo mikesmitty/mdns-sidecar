@@ -20,7 +20,7 @@ func main() {
 
 	log.SetLevel(log.DebugLevel)
 
-	mdns.NewServer(mdns.Config{Monitor: "eth0"})
+	mdns.NewListener(mdns.Config{Monitor: "eth0"})
 
 	time.Sleep(5 * time.Minute)
 }

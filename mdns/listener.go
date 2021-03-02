@@ -31,14 +31,14 @@ type Config struct {
 	MagicTTL int
 }
 
-type Server struct {
+type Listener struct {
 	config Config
 
 	ipv4List *ipv4.PacketConn
 	ipv6List *ipv6.PacketConn
 }
 
-func NewServer(config Config) (*Server, error) {
+func NewListener(config Config) (*Listener, error) {
 	ipv4List, _ := listener4(config)
 	ipv6List, _ := listener6(config)
 
@@ -46,19 +46,19 @@ func NewServer(config Config) (*Server, error) {
 		return nil, fmt.Errorf("No multicast listeners could be started")
 	}
 
-	s := &Server{
+	s := &Listener{
 		config:   config,
 		ipv4List: ipv4List,
 		ipv6List: ipv6List,
 	}
 
 	if ipv4List != nil {
-		go s.recv(ipv4List)
+		go l.recv(ipv4List)
 	}
 
 	// TODO ipv6
 	//if ipv6List != nil {
-	//	go s.recv(ipv6List)
+	//	go l.recv(ipv6List)
 	//}
 
 	return s, nil
@@ -96,7 +96,7 @@ func listener6(config Config) (*ipv6.PacketConn, error) {
 	return nil, nil
 }
 
-func (s *Server) recv(p *ipv4.PacketConn) {
+func (l *Listener) recv(p *ipv4.PacketConn) {
 	for {
 		b := make([]byte, bufSize)
 		n, cm, _, err := p.ReadFrom(b)
@@ -110,7 +110,7 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 			continue
 		}
 
-		if cm.TTL == s.Config.MagicTTL {
+		if cm.TTL == l.Config.MagicTTL {
 			log.Debugf("Discarding packet with magic TTL")
 			continue
 		}
