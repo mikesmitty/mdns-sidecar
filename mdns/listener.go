@@ -3,67 +3,79 @@ package mdns
 import (
 	"fmt"
 	"net"
+	"os"
 
-	"github.com/miekg/dns"
+	"github.com/denisbrodbeck/machineid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/ipv4"
-	"golang.org/x/net/ipv6"
 )
 
 // TODO: Add ipv6 support
 // TODO: Refactor this into something sensible
 // Inspired by github.com/hashicorp/mdns
 
-const (
-	ipv4mdns = "224.0.0.251"
-	ipv6mdns = "ff02::fb"
-	mdnsPort = 5353
-	bufSize  = 65536
-	IPv4     = 4
-	IPv6     = 6
-)
+func StartServer(config Config) error {
+	ipv4List, err := listener4(config)
+	//ipv6List, _ := listener6(config)
 
-type Config struct {
-	Monitor string
-	Listen  string
-
-	// Defaulting to zero for now
-	MagicTTL int
-}
-
-type Listener struct {
-	config Config
-
-	ipv4List *ipv4.PacketConn
-	ipv6List *ipv6.PacketConn
-}
-
-func NewListener(config Config) (*Listener, error) {
-	ipv4List, _ := listener4(config)
-	ipv6List, _ := listener6(config)
-
-	if ipv4List == nil && ipv6List == nil {
-		return nil, fmt.Errorf("No multicast listeners could be started")
+	//if ipv4List == nil && ipv6List == nil {
+	if ipv4List == nil {
+		return fmt.Errorf("No multicast listeners could be started: %w", err)
 	}
 
-	s := &Listener{
+	// TODO: Function this section out
+	var uniqueID string
+	//var err error
+	if config.UniqueID != "" {
+		log.Warn("Using provided unique sender ID. If shared with other instances this could cause a self-DoS")
+	} else {
+		uniqueID, err = machineid.ID()
+		if uniqueID == "" || err != nil {
+			log.Info("No machine id found, using hostname as sender id")
+
+			uniqueID, err = os.Hostname()
+			if uniqueID == "" || err != nil {
+				log.Fatal("Unable to get machine id or hostname for use as sender id. Please provide a UniqueID")
+				return err
+			}
+		}
+	}
+
+	s := &Server{
 		config:   config,
 		ipv4List: ipv4List,
-		ipv6List: ipv6List,
+		//ipv6List: ipv6List,
+		uniqueID: uniqueID,
+	}
+
+	c, err := getQueue(config)
+	if err != nil {
+		return err
+	}
+	s.queue = c
+
+	s.send(ipv4List)
+	if err != nil {
+		return err
 	}
 
 	if ipv4List != nil {
-		go l.recv(ipv4List)
+		s.wg.Add(1)
+		go s.recv(ipv4List)
 	}
 
 	// TODO ipv6
 	//if ipv6List != nil {
-	//	go l.recv(ipv6List)
+	//  s.wg.Add(1)
+	//	go s.recv(ipv6List)
 	//}
 
-	return s, nil
+	s.wg.Wait()
+
+	return nil
 }
 
+// TODO: Clean up NIC handling, allow multiple NICs, etc.
 func listener4(config Config) (*ipv4.PacketConn, error) {
 	group := net.ParseIP(ipv4mdns)
 
@@ -88,58 +100,35 @@ func listener4(config Config) (*ipv4.PacketConn, error) {
 		return nil, err
 	}
 
+	log.Infof("Listening on interface: %s", config.Monitor)
+
 	return p, nil
 }
 
-// TODO ipv6
-func listener6(config Config) (*ipv6.PacketConn, error) {
-	return nil, nil
-}
+func (s *Server) recv(p *ipv4.PacketConn) {
+	defer s.wg.Done()
 
-func (l *Listener) recv(p *ipv4.PacketConn) {
 	for {
 		b := make([]byte, bufSize)
 		n, cm, _, err := p.ReadFrom(b)
 		if err != nil {
-			log.Debugf("Error reading packet: %v", err)
+			log.Errorf("Error reading packet: %v", err)
 			continue
 		}
 
 		if cm == nil {
-			log.Debugf("Received no ControlMessage from packet")
+			log.Error("Received no ControlMessage from packet")
 			continue
 		}
 
-		if cm.TTL == l.Config.MagicTTL {
-			log.Debugf("Discarding packet with magic TTL")
+		if cm.TTL == s.config.MagicTTL {
+			log.Debug("Discarding packet with magic TTL")
 			continue
 		}
 
 		// TODO: Host blocklist checking
 
-		msg := dns.Msg{}
-		err = msg.Unpack(b[:n])
-		if err != nil {
-			log.Debugf("Error parsing packet: %v", err)
-			continue
-		}
-
-		fmt.Println(msg.String())
+		s.queue.Publish("ipv4", Msg{Sender: s.uniqueID, Data: b[:n]})
+		log.Debug("Sent message")
 	}
-}
-
-func isLocal(addr net.Addr) bool {
-	localAddrs, err := net.InterfaceAddrs()
-	if err != nil {
-		log.Fatal("Couldn't get interface addresses: %v", err)
-	}
-
-	for i := range localAddrs {
-		if addr == localAddrs[i] {
-			log.Debugf("Ignoring local address: %s", addr)
-			return true
-		}
-	}
-
-	return false
 }

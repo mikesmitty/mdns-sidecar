@@ -1,39 +1,61 @@
 package mdns
 
 import (
-	"net/http"
+	"net"
+	"sync"
 
-	"github.com/gorilla/websocket"
+	nats "github.com/nats-io/nats.go"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/ipv4"
+	"golang.org/x/net/ipv6"
 )
 
-// TODO: Add server listening address
+// TODO: Refactor this into something sensible
 
-var upgrader = websocket.Upgrader{}
+const (
+	ipv4mdns = "224.0.0.251"
+	ipv6mdns = "ff02::fb"
+	mdnsPort = 5353
+	bufSize  = 65536
+	IPv4     = 4
+	IPv6     = 6
+)
 
-func NewServer(config Config) {
-
+type Config struct {
+	Monitor  string
+	Queue    string
+	MagicTTL int
+	UniqueID string
 }
 
-func transfer(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Errorf("Couldn't upgrade websocket: %w", err)
-		return
-	}
-	defer c.Close()
+type Server struct {
+	config   Config
+	uniqueID string
 
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
-			break
+	queue    *nats.EncodedConn
+	ipv4List *ipv4.PacketConn
+	ipv6List *ipv6.PacketConn
+	wg       sync.WaitGroup
+}
+
+type Msg struct {
+	Sender string
+	Data   []byte
+}
+
+// TODO: Find a use for this or nix it
+func isLocal(addr net.Addr) bool {
+	localAddrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Fatal("Couldn't get interface addresses: %v", err)
+	}
+
+	for i := range localAddrs {
+		if addr == localAddrs[i] {
+			log.Debugf("Ignoring local address: %s", addr)
+			return true
 		}
 	}
+
+	return false
 }

@@ -1,1 +1,1 @@
-# mdns-sidecar
+# mdns-mesh
