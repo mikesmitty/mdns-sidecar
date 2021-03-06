@@ -4,10 +4,11 @@ name: build
 on:
   push:
     branches:
-      - 'main'
+      - main
 
 jobs:
   docker:
+    environment: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
