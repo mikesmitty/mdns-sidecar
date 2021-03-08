@@ -11,6 +11,8 @@ import (
 
 func main() {
 	switch {
+	case viper.GetBool("trace"):
+		log.SetLevel(log.TraceLevel)
 	case viper.GetBool("debug"):
 		log.SetLevel(log.DebugLevel)
 	case viper.GetBool("verbose"):
@@ -47,12 +49,10 @@ func init() {
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")
 	pflag.Bool("debug", false, "enable debug mode")
+	pflag.Bool("trace", false, "enable trace mode")
 
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
-
-	//viper.SetDefault("host", "")
-	//viper.SetDefault("port", 4222)
 
 	cfgFile := viper.GetString("config")
 	if cfgFile != "" {

@@ -31,7 +31,7 @@ func (s *Server) send(p *ipv4.PacketConn) error {
 		}
 
 		log.Debugf("Received message from sender: %s", m.Sender)
-		log.Tracef("Message: %+v", msg)
+		log.Tracef("Sent message: %+v", msg)
 
 		if _, err := p.WriteTo(m.Data, nil, dst); err != nil {
 			log.Errorf("Unable to send broadcast: %v", err)
