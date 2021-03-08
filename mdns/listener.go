@@ -1,13 +1,16 @@
 package mdns
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
+	"syscall"
 
 	"github.com/denisbrodbeck/machineid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/ipv4"
+	"golang.org/x/sys/unix"
 )
 
 // TODO: Add ipv6 support
@@ -84,7 +87,8 @@ func listener4(config Config) (*ipv4.PacketConn, error) {
 		return nil, err
 	}
 
-	c, err := net.ListenPacket("udp4", ":5353")
+	netConf := &net.ListenConfig{Control: reusePort}
+	c, err := netConf.ListenPacket(context.Background(), "udp4", ":5353")
 	if err != nil {
 		return nil, err
 	}
@@ -131,4 +135,10 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 		s.queue.Publish("ipv4", Msg{Sender: s.uniqueID, Data: b[:n]})
 		log.Debug("Sent message")
 	}
+}
+
+func reusePort(network, address string, conn syscall.RawConn) error {
+	return conn.Control(func(descriptor uintptr) {
+		syscall.SetsockoptInt(int(descriptor), syscall.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+	})
 }
