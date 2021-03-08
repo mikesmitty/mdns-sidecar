@@ -91,9 +91,12 @@ func listener4(config Config) (*ipv4.PacketConn, error) {
 	if config.Join {
 		group := net.ParseIP(ipv4mdns)
 
-		ifi, err := net.InterfaceByName(config.Monitor)
-		if err != nil {
-			return nil, err
+		var ifi *net.Interface
+		if config.Monitor != "" {
+			ifi, err = net.InterfaceByName(config.Monitor)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if err := p.JoinGroup(ifi, &net.UDPAddr{IP: group}); err != nil {
@@ -123,7 +126,7 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 		b := make([]byte, bufSize)
 		n, cm, _, err := p.ReadFrom(b)
 		if err != nil {
-			log.Errorf("Error reading packet: %v", err)
+			log.Errorf("Error reading packet from wire: %v", err)
 			continue
 		}
 
@@ -141,14 +144,14 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 		msg := dns.Msg{}
 		err = msg.Unpack(b[:n])
 		if err != nil {
-			log.Warnf("Error parsing packet: %v", err)
+			log.Warnf("Error parsing packet from wire: %v", err)
 		}
-		log.Tracef("Received message: %+v", msg)
+		log.Tracef("Received message from wire: %+v", msg)
 
 		// TODO: Host blocklist checking
 
 		s.queue.Publish("ipv4", Msg{Sender: s.uniqueID, Data: b[:n]})
-		log.Debug("Sent message")
+		log.Debug("Sent message to mesh")
 	}
 }
 

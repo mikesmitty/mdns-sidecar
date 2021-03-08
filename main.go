@@ -46,7 +46,7 @@ func init() {
 	pflag.StringP("monitor", "m", "", "network interface on which to send/receive mDNS traffic")
 	pflag.IntP("magic-ttl", "t", 53, "TTL used to mark outgoing packets to prevent broadcast loops")
 	pflag.StringP("unique-id", "i", "", "sender id used to filter out each client's own traffic from the queue")
-	pflag.BoolP("join", "j", false, "join igmp multicast group (likely not necessary)")
+	pflag.BoolP("join", "j", true, "join igmp multicast group")
 
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")
