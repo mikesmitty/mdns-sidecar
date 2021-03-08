@@ -81,13 +81,6 @@ func StartServer(config Config) error {
 
 // TODO: Clean up NIC handling, allow multiple NICs, etc.
 func listener4(config Config) (*ipv4.PacketConn, error) {
-	group := net.ParseIP(ipv4mdns)
-
-	ifi, err := net.InterfaceByName(config.Monitor)
-	if err != nil {
-		return nil, err
-	}
-
 	netConf := &net.ListenConfig{Control: reusePort}
 	c, err := netConf.ListenPacket(context.Background(), "udp4", ":5353")
 	if err != nil {
@@ -95,11 +88,24 @@ func listener4(config Config) (*ipv4.PacketConn, error) {
 	}
 
 	p := ipv4.NewPacketConn(c)
-	if err := p.JoinGroup(ifi, &net.UDPAddr{IP: group}); err != nil {
-		c.Close()
-		return nil, err
+	if config.Join {
+		group := net.ParseIP(ipv4mdns)
+
+		ifi, err := net.InterfaceByName(config.Monitor)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.JoinGroup(ifi, &net.UDPAddr{IP: group}); err != nil {
+			c.Close()
+			return nil, err
+		}
+
+		// Try to disable multicast loopback so we don't have to filter our own traffic
+		p.SetMulticastLoopback(false)
 	}
 
+	// Enable the ControlMessage struct so we can get the source IP and IP TTL
 	if err := p.SetControlMessage(ipv4.FlagTTL|ipv4.FlagSrc|ipv4.FlagDst, true); err != nil {
 		c.Close()
 		return nil, err
@@ -128,6 +134,7 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 
 		if cm.TTL == s.config.MagicTTL {
 			log.Debug("Discarding packet with magic TTL")
+			log.Tracef("Discarding packet with magic TTL: %+v\n", cm)
 			continue
 		}
 

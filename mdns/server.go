@@ -22,9 +22,10 @@ const (
 )
 
 type Config struct {
+	Join     bool
+	MagicTTL int
 	Monitor  string
 	Queue    string
-	MagicTTL int
 	UniqueID string
 }
 
