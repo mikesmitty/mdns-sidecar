@@ -34,7 +34,9 @@ type Server struct {
 	uniqueID string
 
 	queue    *nats.EncodedConn
+	ipv4Addr net.IP
 	ipv4List *ipv4.PacketConn
+	ipv6Addr net.IP
 	ipv6List *ipv6.PacketConn
 	wg       sync.WaitGroup
 }

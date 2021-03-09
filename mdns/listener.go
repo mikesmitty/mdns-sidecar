@@ -82,7 +82,7 @@ func StartServer(config Config) error {
 // TODO: Clean up NIC handling, allow multiple NICs, etc.
 func listener4(config Config) (*ipv4.PacketConn, error) {
 	netConf := &net.ListenConfig{Control: reusePort}
-	c, err := netConf.ListenPacket(context.Background(), "udp4", ":5353")
+	c, err := netConf.ListenPacket(context.Background(), "udp4", "")
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +115,7 @@ func listener4(config Config) (*ipv4.PacketConn, error) {
 	}
 
 	log.Infof("Listening on interface: %s", config.Monitor)
+	log.Debugf("Listening on interface %s with address: %s", config.Monitor, p.LocalAddr())
 
 	return p, nil
 }
