@@ -27,6 +27,14 @@ func StartServer(config Config) error {
 		return fmt.Errorf("No multicast listeners could be started: %w", err)
 	}
 
+	ipv4Send, err := sender4(config)
+	//ipv6Send, _ := sender6(config)
+
+	//if ipv4Send == nil && ipv6Send == nil {
+	if ipv4Send == nil {
+		return fmt.Errorf("No multicast senders could be started: %w", err)
+	}
+
 	// TODO: Function this section out
 	var uniqueID string
 	//var err error
@@ -49,6 +57,8 @@ func StartServer(config Config) error {
 		config:   config,
 		ipv4List: ipv4List,
 		//ipv6List: ipv6List,
+		ipv4Send: ipv4Send,
+		//ipv6Send: ipv6Send,
 		uniqueID: uniqueID,
 	}
 
@@ -58,7 +68,7 @@ func StartServer(config Config) error {
 	}
 	s.queue = c
 
-	s.send(ipv4List)
+	s.send(ipv4Send)
 	if err != nil {
 		return err
 	}
@@ -82,7 +92,7 @@ func StartServer(config Config) error {
 // TODO: Clean up NIC handling, allow multiple NICs, etc.
 func listener4(config Config) (*ipv4.PacketConn, error) {
 	netConf := &net.ListenConfig{Control: reusePort}
-	c, err := netConf.ListenPacket(context.Background(), "udp4", "")
+	c, err := netConf.ListenPacket(context.Background(), "udp4", ":5353")
 	if err != nil {
 		return nil, err
 	}

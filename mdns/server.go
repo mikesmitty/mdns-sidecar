@@ -36,8 +36,10 @@ type Server struct {
 	queue    *nats.EncodedConn
 	ipv4Addr net.IP
 	ipv4List *ipv4.PacketConn
+	ipv4Send *ipv4.PacketConn
 	ipv6Addr net.IP
 	ipv6List *ipv6.PacketConn
+	ipv6Send *ipv6.PacketConn
 	wg       sync.WaitGroup
 }
 
