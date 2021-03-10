@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/ipv4"
 )
@@ -65,15 +66,15 @@ func (s *Server) send(p *ipv4.PacketConn) error {
 			return
 		}
 
-		//msg := dns.Msg{}
-		//err := msg.Unpack(m.Data)
-		//if err != nil {
-		//	log.Warnf("Error parsing mesh packet: %v", err)
-		//	return
-		//}
+		msg := dns.Msg{}
+		err := msg.Unpack(m.Data)
+		if err != nil {
+			log.Warnf("Error parsing mesh packet: %v", err)
+			return
+		}
 
 		log.Debugf("Mesh message from sender: %s", m.Sender)
-		//log.Tracef("Rebroadcast message to wire: %+v", msg)
+		log.Tracef("Rebroadcast message to wire: %+v", msg)
 
 		if _, err := p.WriteTo(m.Data, nil, dst); err != nil {
 			log.Errorf("Unable to send broadcast to wire: %v", err)
