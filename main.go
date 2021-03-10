@@ -26,11 +26,12 @@ func main() {
 	queue := fmt.Sprintf("nats://%s:%d", viper.GetString("address"), viper.GetInt("port"))
 
 	config := mdns.Config{
-		Monitor:  viper.GetString("monitor"),
-		Queue:    queue,
-		MagicTTL: viper.GetInt("magic-ttl"),
-		UniqueID: viper.GetString("unique-id"),
 		Join:     viper.GetBool("join"),
+		Monitor:  viper.GetString("monitor"),
+		MagicTTL: viper.GetInt("magic-ttl"),
+		Queue:    queue,
+		SenderIP: viper.GetString("sender-ip"),
+		UniqueID: viper.GetString("unique-id"),
 	}
 
 	err := mdns.StartServer(config)
@@ -45,6 +46,7 @@ func init() {
 	pflag.IntP("port", "p", 4222, "NATS queue port")
 	pflag.StringP("monitor", "m", "", "network interface on which to send/receive mDNS traffic")
 	pflag.IntP("magic-ttl", "t", 53, "TTL used to mark outgoing packets to prevent broadcast loops")
+	pflag.StringP("sender-ip", "s", "", "ip address from which to send broadcasts")
 	pflag.StringP("unique-id", "i", "", "sender id used to filter out each client's own traffic from the queue")
 	pflag.BoolP("join", "j", true, "join igmp multicast group")
 

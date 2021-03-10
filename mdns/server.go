@@ -26,6 +26,7 @@ type Config struct {
 	MagicTTL int
 	Monitor  string
 	Queue    string
+	SenderIP string
 	UniqueID string
 }
 

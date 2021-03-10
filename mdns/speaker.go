@@ -14,7 +14,7 @@ import (
 // Inspired by github.com/hashicorp/mdns
 func sender4(config Config) (*ipv4.PacketConn, error) {
 	netConf := &net.ListenConfig{Control: reusePort}
-	c, err := netConf.ListenPacket(context.Background(), "udp4", "")
+	c, err := netConf.ListenPacket(context.Background(), "udp4", config.SenderIP)
 	if err != nil {
 		return nil, err
 	}
