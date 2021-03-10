@@ -68,7 +68,11 @@ func StartServer(config Config) error {
 	}
 	s.queue = c
 
-	err = s.send(ipv4Send)
+	if s.config.HighPort {
+		err = s.send(ipv4Send)
+	} else {
+		err = s.send(ipv4List)
+	}
 	if err != nil {
 		return err
 	}

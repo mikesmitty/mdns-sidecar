@@ -22,6 +22,7 @@ const (
 )
 
 type Config struct {
+	HighPort bool
 	Join     bool
 	MagicTTL int
 	Monitor  string

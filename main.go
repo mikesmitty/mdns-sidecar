@@ -26,6 +26,7 @@ func main() {
 	queue := fmt.Sprintf("nats://%s:%d", viper.GetString("address"), viper.GetInt("port"))
 
 	config := mdns.Config{
+		HighPort: viper.GetBool("high-port"),
 		Join:     viper.GetBool("join"),
 		Monitor:  viper.GetString("monitor"),
 		MagicTTL: viper.GetInt("magic-ttl"),
@@ -49,6 +50,7 @@ func init() {
 	pflag.StringP("sender-ip", "s", "", "ip address from which to send broadcasts")
 	pflag.StringP("unique-id", "i", "", "sender id used to filter out each client's own traffic from the queue")
 	pflag.BoolP("join", "j", true, "join igmp multicast group")
+	pflag.BoolP("high-port", "k", true, "send broadcasts from separate socket with a high port")
 
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")
