@@ -28,7 +28,7 @@ func main() {
 	config := mdns.Config{
 		Monitor:  viper.GetString("monitor"),
 		Queue:    queue,
-		MagicTTL: viper.GetInt("unique-id"),
+		MagicTTL: viper.GetInt("magic-ttl"),
 		UniqueID: viper.GetString("unique-id"),
 		Join:     viper.GetBool("join"),
 	}
