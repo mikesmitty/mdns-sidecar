@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/denisbrodbeck/machineid"
-	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/sys/unix"
@@ -152,12 +151,12 @@ func (s *Server) recv(p *ipv4.PacketConn) {
 			continue
 		}
 
-		msg := dns.Msg{}
-		err = msg.Unpack(b[:n])
-		if err != nil {
-			log.Warnf("Error parsing packet from wire: %v", err)
-		}
-		log.Tracef("Received message from wire: %+v", msg)
+		//msg := dns.Msg{}
+		//err = msg.Unpack(b[:n])
+		//if err != nil {
+		//	log.Warnf("Error parsing packet from wire: %v", err)
+		//}
+		//log.Tracef("Received message from wire: %+v", msg)
 
 		// TODO: Host blocklist checking
 
