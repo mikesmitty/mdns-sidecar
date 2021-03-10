@@ -68,7 +68,7 @@ func StartServer(config Config) error {
 	}
 	s.queue = c
 
-	s.send(ipv4Send)
+	err = s.send(ipv4Send)
 	if err != nil {
 		return err
 	}
