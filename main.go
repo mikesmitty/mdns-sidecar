@@ -26,13 +26,12 @@ func main() {
 	queue := fmt.Sprintf("nats://%s:%d", viper.GetString("address"), viper.GetInt("port"))
 
 	config := mdns.Config{
-		HighPort: viper.GetBool("high-port"),
-		Join:     viper.GetBool("join"),
-		Monitor:  viper.GetString("monitor"),
-		MagicTTL: viper.GetInt("magic-ttl"),
-		Queue:    queue,
-		SenderIP: viper.GetString("sender-ip"),
-		UniqueID: viper.GetString("unique-id"),
+		FilterTTL: viper.GetInt("filter-ttl"),
+		HighPort:  viper.GetBool("high-port"),
+		ListenIP:  viper.GetString("listen-ip"),
+		Monitor:   viper.GetString("monitor"),
+		Queue:     queue,
+		UniqueID:  viper.GetString("unique-id"),
 	}
 
 	err := mdns.StartServer(config)
@@ -46,11 +45,10 @@ func init() {
 	pflag.StringP("address", "a", "", "NATS queue address")
 	pflag.IntP("port", "p", 4222, "NATS queue port")
 	pflag.StringP("monitor", "m", "", "network interface on which to send/receive mDNS traffic")
-	pflag.IntP("magic-ttl", "t", 53, "TTL used to mark outgoing packets to prevent broadcast loops")
-	pflag.StringP("sender-ip", "s", "", "ip address from which to send broadcasts")
-	pflag.StringP("unique-id", "i", "", "sender id used to filter out each client's own traffic from the queue")
-	pflag.BoolP("join", "j", true, "join igmp multicast group")
-	pflag.BoolP("high-port", "k", true, "send broadcasts from separate socket with a high port")
+	pflag.IntP("filter-ttl", "t", 1, "TTL used to mark outgoing packets to prevent broadcast loops")
+	pflag.StringP("listen-ip", "l", "", "ip address from which to listen and send broadcasts")
+	pflag.String("unique-id", "", "sender id used to filter out each client's own traffic from the queue")
+	pflag.Bool("high-port", false, "send broadcasts from separate socket with a high port")
 
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")
