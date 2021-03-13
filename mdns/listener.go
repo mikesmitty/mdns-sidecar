@@ -70,6 +70,7 @@ func getInterfaces(config Config) (ifs []*net.Interface, err error) {
 			return nil, err
 		}
 
+		log.Debugf("Adding %s to monitored interfaces", ifi.Name)
 		ifs = append(ifs, ifi)
 	}
 
@@ -94,6 +95,7 @@ func joinMulticast(p *ipv4.PacketConn, ifs []*net.Interface) error {
 		if err := p.JoinGroup(ifs[i], &net.UDPAddr{IP: group}); err != nil {
 			return err
 		}
+		log.Debugf("Joining multicast on %s", ifs[i].Name)
 	}
 
 	// Try to disable multicast loopback so we don't have to filter our own traffic

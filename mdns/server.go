@@ -175,11 +175,11 @@ func (s *Server) send(m *Msg) {
 	match := s.labelMatch(msg)
 	if (s.config.HighPort && match) || (!s.config.HighPort && !match) {
 		p = s.ipv4Low
+		log.Debugf("Mesh message to low port, from sender: %s", m.Sender)
 	} else {
 		p = s.ipv4High
+		log.Debugf("Mesh message to high port, from sender: %s", m.Sender)
 	}
-
-	log.Debugf("Mesh message from sender: %s", m.Sender)
 
 	if _, err := p.WriteTo(m.Data, nil, s.ipv4Dst); err != nil {
 		log.Errorf("Unable to send broadcast to wire: %v", err)
