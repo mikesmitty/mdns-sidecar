@@ -3,6 +3,8 @@ package mdns
 import (
 	"net"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/denisbrodbeck/machineid"
@@ -21,12 +23,13 @@ const (
 )
 
 type Config struct {
-	FilterTTL int
-	HighPort  bool
-	ListenIP  string
-	Monitor   string
-	Queue     string
-	UniqueID  string
+	FilterTTL   int
+	HighPort    bool
+	ListenIP    string
+	Monitor     []string
+	PortFilters []string
+	Queue       string
+	UniqueID    string
 }
 
 type Server struct {
@@ -41,8 +44,9 @@ type Server struct {
 	ipv6High *ipv6.PacketConn
 	ipv6Low  *ipv6.PacketConn
 
-	queue *nats.EncodedConn
-	wg    sync.WaitGroup
+	portRegex []*regexp.Regexp
+	queue     *nats.EncodedConn
+	wg        sync.WaitGroup
 }
 
 type Msg struct {
@@ -51,16 +55,27 @@ type Msg struct {
 }
 
 func StartServer(config Config) error {
+	uniqueID, err := getUniqueID(config)
+	if err != nil {
+		return err
+	}
+
+	var portRegex []*regexp.Regexp
+	for _, filter := range config.PortFilters {
+		r, err := regexp.Compile(filter)
+		if err != nil {
+			log.Errorf("Error compiling port-filter regex '%s': %v", filter, err)
+			continue
+		}
+
+		portRegex = append(portRegex, r)
+	}
+
 	ipv4Low, err := listener4(config, mdnsPort)
 	if err != nil {
 		return err
 	}
 	ipv4High, err := listener4(config, 0)
-	if err != nil {
-		return err
-	}
-
-	uniqueID, err := getUniqueID(config)
 	if err != nil {
 		return err
 	}
@@ -71,11 +86,12 @@ func StartServer(config Config) error {
 	}
 
 	s := &Server{
-		config:   config,
-		ipv4Dst:  ipv4Dst,
-		ipv4High: ipv4High,
-		ipv4Low:  ipv4Low,
-		uniqueID: uniqueID,
+		config:    config,
+		ipv4Dst:   ipv4Dst,
+		ipv4High:  ipv4High,
+		ipv4Low:   ipv4Low,
+		portRegex: portRegex,
+		uniqueID:  uniqueID,
 	}
 
 	c, err := getQueue(config)
@@ -155,20 +171,40 @@ func (s *Server) send(m *Msg) {
 
 	// TODO: Add filtering logic
 
-	// TODO: Add high/low port rebroadcast based on regex/dns labels
 	var p *ipv4.PacketConn
-	if s.config.HighPort {
-		p = s.ipv4High
-	} else {
+	match := s.labelMatch(msg)
+	if (s.config.HighPort && match) || (!s.config.HighPort && !match) {
 		p = s.ipv4Low
+	} else {
+		p = s.ipv4High
 	}
 
 	log.Debugf("Mesh message from sender: %s", m.Sender)
-	log.Tracef("Rebroadcast message to wire: %+v", msg)
 
 	if _, err := p.WriteTo(m.Data, nil, s.ipv4Dst); err != nil {
 		log.Errorf("Unable to send broadcast to wire: %v", err)
 	}
+
+	log.Tracef("Rebroadcast message to wire: %+v", msg)
+}
+
+func (s *Server) labelMatch(msg dns.Msg) bool {
+	for _, r := range s.portRegex {
+		for _, q := range msg.Question {
+			name := strings.TrimSuffix(q.Name, ".")
+			if r.MatchString(name) {
+				return true
+			}
+		}
+		for _, a := range msg.Answer {
+			name := strings.TrimSuffix(a.Header().Name, ".")
+			if r.MatchString(name) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func getQueue(config Config) (*nats.EncodedConn, error) {

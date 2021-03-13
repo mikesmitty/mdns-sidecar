@@ -63,26 +63,25 @@ func getConn(config Config, port int) (*ipv4.PacketConn, error) {
 	return p, nil
 }
 
-func getInterfaces(config Config) ([]*net.Interface, error) {
-	var (
-		err    error
-		ifaces []net.Interface
-		ifs    []*net.Interface
-		ifi    *net.Interface
-	)
+func getInterfaces(config Config) (ifs []*net.Interface, err error) {
+	for _, ifn := range config.Monitor {
+		ifi, err := net.InterfaceByName(ifn)
+		if err != nil {
+			return nil, err
+		}
 
-	if config.Monitor != "" {
-		ifi, err = net.InterfaceByName(config.Monitor)
 		ifs = append(ifs, ifi)
-	} else {
-		ifaces, err = net.Interfaces()
-	}
-	if err != nil {
-		return nil, err
 	}
 
-	for i := range ifaces {
-		ifs = append(ifs, &ifaces[i])
+	if len(ifs) == 0 {
+		ifaces, err := net.Interfaces()
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range ifaces {
+			ifs = append(ifs, &ifaces[i])
+		}
 	}
 
 	return ifs, nil
