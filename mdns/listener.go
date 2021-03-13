@@ -13,7 +13,7 @@ import (
 
 // TODO: Add ipv6 support
 
-func listener4(config Config, port int) (*ipv4.PacketConn, error) {
+func listener4(config Config, ifs []*net.Interface, port int) (*ipv4.PacketConn, error) {
 	p, err := getConn(config, port)
 	if err != nil {
 		return nil, err
@@ -23,11 +23,6 @@ func listener4(config Config, port int) (*ipv4.PacketConn, error) {
 			p.Close()
 		}
 	}()
-
-	ifs, err := getInterfaces(config)
-	if err != nil {
-		return nil, err
-	}
 
 	err = joinMulticast(p, ifs)
 	if err != nil {
@@ -61,6 +56,23 @@ func getConn(config Config, port int) (*ipv4.PacketConn, error) {
 	p := ipv4.NewPacketConn(c)
 
 	return p, nil
+}
+
+func getCM4(config Config, ifs []*net.Interface) ([]*ipv4.ControlMessage, error) {
+	var cms []*ipv4.ControlMessage
+
+	ip := net.IPv4zero
+	if config.ListenIP != "" {
+		ip = net.ParseIP(config.ListenIP)
+		if ip == nil {
+			return nil, fmt.Errorf("Couldn't parse listen-ip: %s", config.ListenIP)
+		}
+	}
+	for i := range ifs {
+		cms = append(cms, &ipv4.ControlMessage{Src: ip, IfIndex: ifs[i].Index})
+	}
+
+	return cms, nil
 }
 
 func getInterfaces(config Config) (ifs []*net.Interface, err error) {

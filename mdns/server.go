@@ -36,6 +36,7 @@ type Server struct {
 	config   Config
 	uniqueID string
 
+	ipv4CMs  []*ipv4.ControlMessage
 	ipv4Dst  *net.UDPAddr
 	ipv4High *ipv4.PacketConn
 	ipv4Low  *ipv4.PacketConn
@@ -71,11 +72,21 @@ func StartServer(config Config) error {
 		portRegex = append(portRegex, r)
 	}
 
-	ipv4Low, err := listener4(config, mdnsPort)
+	ifs, err := getInterfaces(config)
 	if err != nil {
 		return err
 	}
-	ipv4High, err := listener4(config, 0)
+
+	cms, err := getCM4(config, ifs)
+	if err != nil {
+		return err
+	}
+
+	ipv4Low, err := listener4(config, ifs, mdnsPort)
+	if err != nil {
+		return err
+	}
+	ipv4High, err := listener4(config, ifs, 0)
 	if err != nil {
 		return err
 	}
@@ -87,6 +98,7 @@ func StartServer(config Config) error {
 
 	s := &Server{
 		config:    config,
+		ipv4CMs:   cms,
 		ipv4Dst:   ipv4Dst,
 		ipv4High:  ipv4High,
 		ipv4Low:   ipv4Low,
@@ -181,8 +193,10 @@ func (s *Server) send(m *Msg) {
 		log.Debugf("Mesh message to high port, from sender: %s", m.Sender)
 	}
 
-	if _, err := p.WriteTo(m.Data, nil, s.ipv4Dst); err != nil {
-		log.Errorf("Unable to send broadcast to wire: %v", err)
+	for _, cm := range s.ipv4CMs {
+		if _, err := p.WriteTo(m.Data, cm, s.ipv4Dst); err != nil {
+			log.Errorf("Unable to send broadcast to wire: %v", err)
+		}
 	}
 
 	log.Tracef("Rebroadcast message to wire: %+v", msg)
