@@ -10,7 +10,6 @@ FROM alpine:3.13
 
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
-#COPY --from=base /go/src/github.com/mikesmitty/mdns-mesh/mdns-mesh .
 COPY --from=base /go/bin/mdns-mesh .
 
 CMD /app/mdns-mesh
