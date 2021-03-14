@@ -28,6 +28,7 @@ func main() {
 	config := mdns.Config{
 		AllowFilter: viper.GetStringSlice("allow-filter"),
 		DenyFilter:  viper.GetStringSlice("deny-filter"),
+		DenyIP:      viper.GetStringSlice("deny-ip"),
 		FilterTTL:   viper.GetInt("filter-ttl"),
 		HighPort:    viper.GetBool("high-port"),
 		ListenIP:    viper.GetString("listen-ip"),
@@ -55,6 +56,7 @@ func init() {
 	pflag.StringSlice("port-filter", nil, "regex filters to send traffic to high or low source ports")
 	pflag.StringSlice("allow-filter", nil, "regex filters to allow only matching traffic (cannot be used with --deny-filter)")
 	pflag.StringSlice("deny-filter", nil, "regex filters to deny only matching traffic (cannot be used with --allow-filter)")
+	pflag.IPSlice("deny-ip", nil, "discard all messages from these IPs")
 
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")

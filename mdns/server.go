@@ -26,6 +26,7 @@ const (
 type Config struct {
 	AllowFilter []string
 	DenyFilter  []string
+	DenyIP      []string
 	FilterTTL   int
 	HighPort    bool
 	ListenIP    string
@@ -66,7 +67,6 @@ func StartServer(config Config) error {
 		return err
 	}
 
-	// regex
 	portRegex, filterRegex, filterDeny, err := getRegexFilters(config)
 	if err != nil {
 		return err
@@ -169,6 +169,12 @@ func (s *Server) receive(p *ipv4.PacketConn) {
 		if cm.TTL == s.config.FilterTTL {
 			log.Debug("Discarding packet with filter TTL")
 			log.Tracef("Discarding packet with filter TTL: %+v\n", cm)
+			continue
+		}
+
+		if ipDenied(cm.Src, s.config.DenyIP) {
+			log.Debugf("Discarding packet from denied IP: %s", cm.Src)
+			log.Tracef("Discarding packet from denied IP: %+v\n", cm)
 			continue
 		}
 
@@ -298,6 +304,17 @@ func getUniqueID(config Config) (string, error) {
 	}
 
 	return uniqueID, nil
+}
+
+// Check if IP is on the deny list
+func ipDenied(ip net.IP, ips []string) bool {
+	for i := range ips {
+		if ip.String() == ips[i] {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Check if the DNS labels (question/answer name(s)) match our regex filters
