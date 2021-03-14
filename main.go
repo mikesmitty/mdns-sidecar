@@ -26,11 +26,13 @@ func main() {
 	queue := fmt.Sprintf("nats://%s:%d", viper.GetString("address"), viper.GetInt("port"))
 
 	config := mdns.Config{
+		AllowFilter: viper.GetStringSlice("allow-filter"),
+		DenyFilter:  viper.GetStringSlice("deny-filter"),
 		FilterTTL:   viper.GetInt("filter-ttl"),
 		HighPort:    viper.GetBool("high-port"),
 		ListenIP:    viper.GetString("listen-ip"),
 		Monitor:     viper.GetStringSlice("monitor"),
-		PortFilters: viper.GetStringSlice("port-filters"),
+		PortFilter:  viper.GetStringSlice("port-filter"),
 		Queue:       queue,
 		UniqueID:    viper.GetString("unique-id"),
 	}
@@ -50,7 +52,9 @@ func init() {
 	pflag.StringP("listen-ip", "l", "", "ip address from which to listen and send broadcasts")
 	pflag.String("unique-id", "", "sender id used to filter out each client's own traffic from the queue")
 	pflag.Bool("high-port", false, "send broadcasts from separate socket with a high port")
-	pflag.StringSlice("port-filters", nil, "regex filters to send traffic to high or low source ports")
+	pflag.StringSlice("port-filter", nil, "regex filters to send traffic to high or low source ports")
+	pflag.StringSlice("allow-filter", nil, "regex filters to allow only matching traffic (cannot be used with --deny-filter)")
+	pflag.StringSlice("deny-filter", nil, "regex filters to deny only matching traffic (cannot be used with --allow-filter)")
 
 	pflag.BoolP("quiet", "q", false, "enable verbose mode")
 	pflag.BoolP("verbose", "v", false, "enable verbose mode")

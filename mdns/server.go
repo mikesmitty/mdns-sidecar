@@ -1,6 +1,7 @@
 package mdns
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"regexp"
@@ -23,11 +24,13 @@ const (
 )
 
 type Config struct {
+	AllowFilter []string
+	DenyFilter  []string
 	FilterTTL   int
 	HighPort    bool
 	ListenIP    string
 	Monitor     []string
-	PortFilters []string
+	PortFilter  []string
 	Queue       string
 	UniqueID    string
 }
@@ -45,9 +48,11 @@ type Server struct {
 	ipv6High *ipv6.PacketConn
 	ipv6Low  *ipv6.PacketConn
 
-	portRegex []*regexp.Regexp
-	queue     *nats.EncodedConn
-	wg        sync.WaitGroup
+	filterDeny  bool
+	filterRegex []*regexp.Regexp
+	portRegex   []*regexp.Regexp
+	queue       *nats.EncodedConn
+	wg          sync.WaitGroup
 }
 
 type Msg struct {
@@ -61,15 +66,10 @@ func StartServer(config Config) error {
 		return err
 	}
 
-	var portRegex []*regexp.Regexp
-	for _, filter := range config.PortFilters {
-		r, err := regexp.Compile(filter)
-		if err != nil {
-			log.Errorf("Error compiling port-filter regex '%s': %v", filter, err)
-			continue
-		}
-
-		portRegex = append(portRegex, r)
+	// regex
+	portRegex, filterRegex, filterDeny, err := getRegexFilters(config)
+	if err != nil {
+		return err
 	}
 
 	ifs, err := getInterfaces(config)
@@ -97,13 +97,15 @@ func StartServer(config Config) error {
 	}
 
 	s := &Server{
-		config:    config,
-		ipv4CMs:   cms,
-		ipv4Dst:   ipv4Dst,
-		ipv4High:  ipv4High,
-		ipv4Low:   ipv4Low,
-		portRegex: portRegex,
-		uniqueID:  uniqueID,
+		config:      config,
+		filterDeny:  filterDeny,
+		filterRegex: filterRegex,
+		ipv4CMs:     cms,
+		ipv4Dst:     ipv4Dst,
+		ipv4High:    ipv4High,
+		ipv4Low:     ipv4Low,
+		portRegex:   portRegex,
+		uniqueID:    uniqueID,
 	}
 
 	c, err := getQueue(config)
@@ -130,6 +132,21 @@ func StartServer(config Config) error {
 	s.wg.Wait()
 
 	return nil
+}
+
+// Check filters to deny messages in from/out to the wire
+func (s *Server) discardMessage(msg dns.Msg) bool {
+	if s.filterDeny && labelMatch(msg, s.filterRegex) {
+		log.Debug("Deny filter discarding message")
+		log.Tracef("Deny filter discarding message: %+v", msg)
+		return true
+	} else if len(s.filterRegex) > 0 && !labelMatch(msg, s.filterRegex) {
+		log.Debug("No allow filter match, discarding message")
+		log.Tracef("No allow filter match, discarding message: %+v", msg)
+		return true
+	}
+
+	return false
 }
 
 // Start loop to pull multicast broadcasts off the wire and send them to NATS
@@ -162,7 +179,10 @@ func (s *Server) receive(p *ipv4.PacketConn) {
 		}
 		log.Tracef("Received message from wire: %+v", msg)
 
-		// TODO: Host blocklist checking / incoming filtering
+		if s.discardMessage(msg) {
+			log.Debugf("Discarding message from wire: %s", cm.Src)
+			continue
+		}
 
 		s.queue.Publish("ipv4", Msg{Sender: s.uniqueID, Data: b[:n]})
 		log.Debug("Sent message to mesh")
@@ -183,10 +203,13 @@ func (s *Server) send(m *Msg) {
 		return
 	}
 
-	// TODO: Add filtering logic
+	if s.discardMessage(msg) {
+		log.Debugf("Discarding message from sender: %s", m.Sender)
+		return
+	}
 
 	var p *ipv4.PacketConn
-	match := s.labelMatch(msg)
+	match := labelMatch(msg, s.portRegex)
 	if (s.config.HighPort && match) || (!s.config.HighPort && !match) {
 		p = s.ipv4Low
 		log.Debugf("Mesh message to low port, from sender: %s", m.Sender)
@@ -204,26 +227,6 @@ func (s *Server) send(m *Msg) {
 	log.Tracef("Rebroadcast message to wire: %+v", msg)
 }
 
-// Check if the DNS labels (question/answer name(s)) match our regex filters
-func (s *Server) labelMatch(msg dns.Msg) bool {
-	for _, r := range s.portRegex {
-		for _, q := range msg.Question {
-			name := strings.TrimSuffix(q.Name, ".")
-			if r.MatchString(name) {
-				return true
-			}
-		}
-		for _, a := range msg.Answer {
-			name := strings.TrimSuffix(a.Header().Name, ".")
-			if r.MatchString(name) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 // Connect to the NATS server with a JSON-encoded connection
 func getQueue(config Config) (*nats.EncodedConn, error) {
 	nc, err := nats.Connect(config.Queue)
@@ -236,6 +239,44 @@ func getQueue(config Config) (*nats.EncodedConn, error) {
 	}
 
 	return c, nil
+}
+
+// Compile the high/low port filters and allow/deny list filters
+func getRegexFilters(config Config) (portRegex []*regexp.Regexp, filterRegex []*regexp.Regexp, filterDeny bool, err error) {
+	if len(config.AllowFilter) > 0 && len(config.DenyFilter) > 0 {
+		return nil, nil, false, fmt.Errorf("allow-filter and deny-filter cannot be used together")
+	}
+
+	var r *regexp.Regexp
+	for _, filter := range config.PortFilter {
+		r, err = regexp.Compile(filter)
+		if err != nil {
+			err = fmt.Errorf("Error compiling port-filter regex '%s': %v", filter, err)
+			return
+		}
+
+		portRegex = append(portRegex, r)
+	}
+
+	var filters []string
+	if len(config.DenyFilter) > 0 {
+		filters = config.DenyFilter
+		filterDeny = true
+	} else {
+		filters = config.AllowFilter
+	}
+
+	for _, filter := range filters {
+		r, err = regexp.Compile(filter)
+		if err != nil {
+			err = fmt.Errorf("Error compiling filter regex '%s': %v", filter, err)
+			return
+		}
+
+		filterRegex = append(filterRegex, r)
+	}
+
+	return
 }
 
 // Get a unique ID so we don't repeat our own traffic
@@ -257,4 +298,24 @@ func getUniqueID(config Config) (string, error) {
 	}
 
 	return uniqueID, nil
+}
+
+// Check if the DNS labels (question/answer name(s)) match our regex filters
+func labelMatch(msg dns.Msg, regex []*regexp.Regexp) bool {
+	for _, r := range regex {
+		for _, q := range msg.Question {
+			name := strings.TrimSuffix(q.Name, ".")
+			if r.MatchString(name) {
+				return true
+			}
+		}
+		for _, a := range msg.Answer {
+			name := strings.TrimSuffix(a.Header().Name, ".")
+			if r.MatchString(name) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
