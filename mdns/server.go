@@ -132,6 +132,7 @@ func StartServer(config Config) error {
 	return nil
 }
 
+// Start loop to pull multicast broadcasts off the wire and send them to NATS
 func (s *Server) receive(p *ipv4.PacketConn) {
 	defer s.wg.Done()
 
@@ -168,6 +169,7 @@ func (s *Server) receive(p *ipv4.PacketConn) {
 	}
 }
 
+// Accept messages from NATS and send them out on the wire
 func (s *Server) send(m *Msg) {
 	if m.Sender == s.uniqueID {
 		log.Debug("Ignoring mesh message from self")
@@ -202,6 +204,7 @@ func (s *Server) send(m *Msg) {
 	log.Tracef("Rebroadcast message to wire: %+v", msg)
 }
 
+// Check if the DNS labels (question/answer name(s)) match our regex filters
 func (s *Server) labelMatch(msg dns.Msg) bool {
 	for _, r := range s.portRegex {
 		for _, q := range msg.Question {
@@ -221,6 +224,7 @@ func (s *Server) labelMatch(msg dns.Msg) bool {
 	return false
 }
 
+// Connect to the NATS server with a JSON-encoded connection
 func getQueue(config Config) (*nats.EncodedConn, error) {
 	nc, err := nats.Connect(config.Queue)
 	if err != nil {
@@ -234,6 +238,7 @@ func getQueue(config Config) (*nats.EncodedConn, error) {
 	return c, nil
 }
 
+// Get a unique ID so we don't repeat our own traffic
 func getUniqueID(config Config) (string, error) {
 	if config.UniqueID != "" {
 		log.Warn("Using provided unique sender ID. If shared with other instances this could cause a self-DoS")

@@ -13,6 +13,7 @@ import (
 
 // TODO: Add ipv6 support
 
+// Start an IPv4 listener to send/receive broadcasts
 func listener4(config Config, ifs []*net.Interface, port int) (*ipv4.PacketConn, error) {
 	p, err := getConn(config, port)
 	if err != nil {
@@ -44,6 +45,7 @@ func listener4(config Config, ifs []*net.Interface, port int) (*ipv4.PacketConn,
 	return p, nil
 }
 
+// Create a PacketConn that can reuse sockets where necessary (e.g. broadcaster is on localhost)
 func getConn(config Config, port int) (*ipv4.PacketConn, error) {
 	listenAddr := fmt.Sprintf("%s:%d", config.ListenIP, port)
 
@@ -58,6 +60,7 @@ func getConn(config Config, port int) (*ipv4.PacketConn, error) {
 	return p, nil
 }
 
+// Generate net.ControlMessage structs for each interface to dictate where broadcasts are sent
 func getCM4(config Config, ifs []*net.Interface) ([]*ipv4.ControlMessage, error) {
 	var cms []*ipv4.ControlMessage
 
@@ -75,6 +78,7 @@ func getCM4(config Config, ifs []*net.Interface) ([]*ipv4.ControlMessage, error)
 	return cms, nil
 }
 
+// Get net.Interfaces for the list of provided interface names or all interfaces
 func getInterfaces(config Config) (ifs []*net.Interface, err error) {
 	for _, ifn := range config.Monitor {
 		ifi, err := net.InterfaceByName(ifn)
@@ -100,6 +104,7 @@ func getInterfaces(config Config) (ifs []*net.Interface, err error) {
 	return ifs, nil
 }
 
+// Send out multicast group join messages on the wire for a list of interfaces
 func joinMulticast(p *ipv4.PacketConn, ifs []*net.Interface) error {
 	group := net.ParseIP(ipv4mdns)
 
@@ -119,6 +124,7 @@ func joinMulticast(p *ipv4.PacketConn, ifs []*net.Interface) error {
 	return nil
 }
 
+// Allow reuse of a port for when necessary in getConn()
 func reusePort(network, address string, conn syscall.RawConn) error {
 	return conn.Control(func(descriptor uintptr) {
 		syscall.SetsockoptInt(int(descriptor), syscall.SOL_SOCKET, unix.SO_REUSEPORT, 1)
