@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.5...v0.6.6) (2023-10-18)
+
+
+### Bug Fixes
+
+* make tagged ghcr image available ([#27](https://github.com/mikesmitty/mdns-mesh/issues/27)) ([e2346f3](https://github.com/mikesmitty/mdns-mesh/commit/e2346f37815efb8094f074603561477e3387e6e6))
+
 ## [0.6.5](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.4...v0.6.5) (2023-10-18)
 
 
