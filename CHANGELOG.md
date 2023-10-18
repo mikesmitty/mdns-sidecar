@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.3...v0.6.4) (2023-10-18)
+
+
+### Bug Fixes
+
+* give release-please a pat ([#21](https://github.com/mikesmitty/mdns-mesh/issues/21)) ([9c0e7ac](https://github.com/mikesmitty/mdns-mesh/commit/9c0e7ac4afab8ebd2c66fc4bee0d1aaab30ca14d))
+
 ## [0.6.3](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.2...v0.6.3) (2023-10-18)
 
 
