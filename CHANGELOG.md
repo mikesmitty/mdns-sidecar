@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.7](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.6...v0.6.7) (2023-10-18)
+
+
+### Bug Fixes
+
+* don't strip v from version tags ([#29](https://github.com/mikesmitty/mdns-mesh/issues/29)) ([8141232](https://github.com/mikesmitty/mdns-mesh/commit/814123256da60c8346f6d7b9105bad700ed5c07b))
+
 ## [0.6.6](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.5...v0.6.6) (2023-10-18)
 
 
