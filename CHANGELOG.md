@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.4...v0.6.5) (2023-10-18)
+
+
+### Bug Fixes
+
+* avoid duplicate actions workflows ([#23](https://github.com/mikesmitty/mdns-mesh/issues/23)) ([1b86618](https://github.com/mikesmitty/mdns-mesh/commit/1b86618414e82c3073ba1ef5b95e7ed3a5c02567))
+
 ## [0.6.4](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.3...v0.6.4) (2023-10-18)
 
 
