@@ -14,33 +14,30 @@ jobs:
     environment: build
     runs-on: ubuntu-latest
     steps:
+      # Originally based on:
       # https://blog.oddbit.com/post/2020-09-25-building-multi-architecture-im/
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/${GITHUB_REPOSITORY#*/}
-          GHCR_IMAGE=ghcr.io/${GITHUB_REPOSITORY}
-          VERSION=latest
-          SHORTREF=${GITHUB_SHA::8}
+          SHORTREF=${GITHUB_SHA::7}
+          LATEST=latest
 
-          # If this is a git tag, use the tag name as a docker tag
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
+          if [[ $GITHUB_REF_TYPE == "tag" ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           fi
-          TAGS="${DOCKER_IMAGE}:${VERSION},${DOCKER_IMAGE}:${SHORTREF}"
-          TAGS="${TAGS},${GHCR_IMAGE}:${VERSION},${GHCR_IMAGE}:${SHORTREF}"
 
-          # If the VERSION looks like a version number, assume that
-          # this is the most recent version of the image and also
-          # tag it 'latest'.
-          if [[ $VERSION =~ ^v[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]{1,3})?$ ]]; then
-            TAGS="${TAGS},${DOCKER_IMAGE}:latest"
-            TAGS="${TAGS},${GHCR_IMAGE}:latest"
-          fi
+          for image in $DOCKER_IMAGE $GHCR_IMAGE;do
+            for tag in $SHORTREF $VERSION $LATEST;do
+              TAGS=${TAGS}${SEP}${image}:${tag}
+              SEP=","
+            done
+          done
 
-          # Set output parameters.
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
+        env:
+          DOCKER_IMAGE: ${{ github.repository }}
+          GHCR_IMAGE: ghcr.io/${{ github.repository }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
