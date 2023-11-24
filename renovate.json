@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>mikesmitty/renovate-config",
+    "local>mikesmitty/renovate-config:default",
     "local>mikesmitty/renovate-config:docker-golang"
   ]
 }
