@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.11](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.10...v0.6.11) (2023-11-28)
+
+
+### Bug Fixes
+
+* **deps:** Update Go modules ([#39](https://github.com/mikesmitty/mdns-mesh/issues/39)) ([ef3596a](https://github.com/mikesmitty/mdns-mesh/commit/ef3596ae5cba3807c14003862949388499b0e022))
+
 ## [0.6.10](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.9...v0.6.10) (2023-11-27)
 
 
