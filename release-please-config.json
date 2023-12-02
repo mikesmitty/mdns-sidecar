@@ -1,8 +1,9 @@
 {
     "packages": {
         ".": {
-            "release-type": "go",
-            "package-name": "github.com/mikesmitty/mdns-mesh"
+            "include-component-in-tag": false,
+            "package-name": "github.com/mikesmitty/mdns-mesh",
+            "release-type": "go"
         }
     }
 }
