@@ -1,0 +1,10 @@
+{
+    "packages": [
+        {
+            ".": {
+                "release-type": "go",
+                "package-name": "github.com/mikesmitty/mdns-mesh"
+            }
+        }
+    ]
+}
