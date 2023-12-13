@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.12](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.11...v0.6.12) (2023-12-13)
+
+
+### Bug Fixes
+
+* **deps:** Update alpine Docker tag to v3.19 ([#47](https://github.com/mikesmitty/mdns-mesh/issues/47)) ([b0e66d3](https://github.com/mikesmitty/mdns-mesh/commit/b0e66d362aafd2b5897f4c47fa4d7671f1c177c0))
+* **deps:** Update dependency go to v1.21.5 ([#44](https://github.com/mikesmitty/mdns-mesh/issues/44)) ([de2df43](https://github.com/mikesmitty/mdns-mesh/commit/de2df43e17c417ab59f663534e7b410691fee017))
+* **deps:** Update module github.com/spf13/viper to v1.18.1 ([#46](https://github.com/mikesmitty/mdns-mesh/issues/46)) ([21ab22b](https://github.com/mikesmitty/mdns-mesh/commit/21ab22b786bd3a2fb8c27d7f0a29e8777f228b08))
+
 ## [0.6.11](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.10...v0.6.11) (2023-11-28)
 
 
