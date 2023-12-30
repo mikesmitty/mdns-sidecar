@@ -24,14 +24,14 @@ func main() {
 		log.SetLevel(log.WarnLevel)
 	}
 
-	url, err := url.Parse(viper.GetString("server"))
+	uri, err := url.Parse(viper.GetString("server"))
 	if err != nil {
 		log.Fatalf("Error parsing server URL: %v", err)
 	}
 
-	topic := url.Path[1:len(url.Path)]
-	if topic == "" {
-		topic = "mdns-mesh"
+	topic := "mdns-mesh"
+	if len(uri.Path) > 1 {
+		topic = uri.Path[1:len(uri.Path)]
 	}
 
 	config := mdns.Config{
@@ -43,7 +43,7 @@ func main() {
 		ListenIP:    viper.GetString("listen-ip"),
 		Monitor:     viper.GetStringSlice("monitor"),
 		PortFilter:  viper.GetStringSlice("port-filter"),
-		Server:      url,
+		Server:      uri,
 		Topic:       topic,
 		UniqueID:    viper.GetString("unique-id"),
 	}
