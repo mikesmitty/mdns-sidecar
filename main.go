@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/mikesmitty/mdns-mesh/mdns"
 	log "github.com/sirupsen/logrus"
@@ -23,7 +24,15 @@ func main() {
 		log.SetLevel(log.WarnLevel)
 	}
 
-	queue := fmt.Sprintf("nats://%s:%d", viper.GetString("address"), viper.GetInt("port"))
+	url, err := url.Parse(viper.GetString("server"))
+	if err != nil {
+		log.Fatalf("Error parsing server URL: %v", err)
+	}
+
+	topic := url.Path[1:len(url.Path)]
+	if topic == "" {
+		topic = "mdns-mesh"
+	}
 
 	config := mdns.Config{
 		AllowFilter: viper.GetStringSlice("allow-filter"),
@@ -34,11 +43,12 @@ func main() {
 		ListenIP:    viper.GetString("listen-ip"),
 		Monitor:     viper.GetStringSlice("monitor"),
 		PortFilter:  viper.GetStringSlice("port-filter"),
-		Queue:       queue,
+		Server:      url,
+		Topic:       topic,
 		UniqueID:    viper.GetString("unique-id"),
 	}
 
-	err := mdns.StartServer(config)
+	err = mdns.StartServer(config)
 	if err != nil {
 		log.Fatalf("Error starting listener: %v", err)
 	}
@@ -46,8 +56,7 @@ func main() {
 
 func init() {
 	pflag.StringP("config", "c", "", "config file (default is $HOME/mdns-mesh.yaml)")
-	pflag.StringP("address", "a", "", "NATS queue address")
-	pflag.IntP("port", "p", 4222, "NATS queue port")
+	pflag.StringP("server", "s", "", "MQTT server address")
 	pflag.StringSliceP("monitor", "m", nil, "network interface(s) on which to send/receive mDNS traffic")
 	pflag.IntP("filter-ttl", "t", 1, "TTL used to mark outgoing packets to prevent broadcast loops")
 	pflag.StringP("listen-ip", "l", "", "ip address from which to listen and send broadcasts")
