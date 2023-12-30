@@ -1,16 +1,19 @@
 package mdns
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/denisbrodbeck/machineid"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/miekg/dns"
-	nats "github.com/nats-io/nats.go"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -32,7 +35,8 @@ type Config struct {
 	ListenIP    string
 	Monitor     []string
 	PortFilter  []string
-	Queue       string
+	Server      *url.URL
+	Topic       string
 	UniqueID    string
 }
 
@@ -52,7 +56,7 @@ type Server struct {
 	filterDeny  bool
 	filterRegex []*regexp.Regexp
 	portRegex   []*regexp.Regexp
-	queue       *nats.EncodedConn
+	client      mqtt.Client
 	wg          sync.WaitGroup
 }
 
@@ -108,16 +112,13 @@ func StartServer(config Config) error {
 		uniqueID:    uniqueID,
 	}
 
-	c, err := getQueue(config)
+	c, err := connect(uniqueID, config.Server)
 	if err != nil {
 		return err
 	}
-	s.queue = c
+	s.client = c
 
-	_, err = s.queue.Subscribe("ipv4", s.send)
-	if err != nil {
-		return err
-	}
+	s.client.Subscribe(config.Topic, 0, s.send)
 
 	if ipv4Low != nil {
 		s.wg.Add(1)
@@ -149,7 +150,7 @@ func (s *Server) discardMessage(msg dns.Msg) bool {
 	return false
 }
 
-// Start loop to pull multicast broadcasts off the wire and send them to NATS
+// Start loop to pull multicast broadcasts off the wire and send them to MQTT
 func (s *Server) receive(p *ipv4.PacketConn) {
 	defer s.wg.Done()
 
@@ -190,32 +191,43 @@ func (s *Server) receive(p *ipv4.PacketConn) {
 			continue
 		}
 
-		s.queue.Publish("ipv4", Msg{Sender: s.uniqueID, Data: b[:n]})
+		jsonMsg, err := json.Marshal(Msg{Sender: s.uniqueID, Data: b[:n]})
+		if err != nil {
+			log.Errorf("Error marshalling message from wire: %v", err)
+		}
+		s.client.Publish(s.config.Topic, 0, false, jsonMsg)
 		log.Debug("Sent message to mesh")
 	}
 }
 
 // Accept messages from NATS and send them out on the wire
-func (s *Server) send(m *Msg) {
+func (s *Server) send(client mqtt.Client, msg mqtt.Message) {
+	m := Msg{}
+	err := json.Unmarshal(msg.Payload(), &m)
+	if err != nil {
+		log.Errorf("Error unmarshalling message from mesh: %v", err)
+		return
+	}
+
 	if m.Sender == s.uniqueID {
 		log.Debug("Ignoring mesh message from self")
 		return
 	}
 
-	msg := dns.Msg{}
-	err := msg.Unpack(m.Data)
+	dm := dns.Msg{}
+	err = dm.Unpack(m.Data)
 	if err != nil {
 		log.Warnf("Error parsing mesh packet: %v", err)
 		return
 	}
 
-	if s.discardMessage(msg) {
+	if s.discardMessage(dm) {
 		log.Debugf("Discarding message from sender: %s", m.Sender)
 		return
 	}
 
 	var p *ipv4.PacketConn
-	match := labelMatch(msg, s.portRegex)
+	match := labelMatch(dm, s.portRegex)
 	if (s.config.HighPort && match) || (!s.config.HighPort && !match) {
 		p = s.ipv4Low
 		log.Debugf("Mesh message to low port, from sender: %s", m.Sender)
@@ -233,18 +245,26 @@ func (s *Server) send(m *Msg) {
 	log.Tracef("Rebroadcast message to wire: %+v", msg)
 }
 
-// Connect to the NATS server with a JSON-encoded connection
-func getQueue(config Config) (*nats.EncodedConn, error) {
-	nc, err := nats.Connect(config.Queue)
-	if err != nil {
+func connect(clientId string, uri *url.URL) (mqtt.Client, error) {
+	opts := createClientOptions(clientId, uri)
+	client := mqtt.NewClient(opts)
+	token := client.Connect()
+	for !token.WaitTimeout(3 * time.Second) {
+	}
+	if err := token.Error(); err != nil {
 		return nil, err
 	}
-	c, err := nats.NewEncodedConn(nc, nats.JSON_ENCODER)
-	if err != nil {
-		return nil, err
-	}
+	return client, nil
+}
 
-	return c, nil
+func createClientOptions(clientId string, uri *url.URL) *mqtt.ClientOptions {
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(fmt.Sprintf("tcp://%s", uri.Host))
+	opts.SetUsername(uri.User.Username())
+	password, _ := uri.User.Password()
+	opts.SetPassword(password)
+	opts.SetClientID(clientId)
+	return opts
 }
 
 // Compile the high/low port filters and allow/deny list filters
@@ -257,7 +277,7 @@ func getRegexFilters(config Config) (portRegex []*regexp.Regexp, filterRegex []*
 	for _, filter := range config.PortFilter {
 		r, err = regexp.Compile(filter)
 		if err != nil {
-			err = fmt.Errorf("Error compiling port-filter regex '%s': %v", filter, err)
+			err = fmt.Errorf("error compiling port-filter regex '%s': %v", filter, err)
 			return
 		}
 
@@ -275,7 +295,7 @@ func getRegexFilters(config Config) (portRegex []*regexp.Regexp, filterRegex []*
 	for _, filter := range filters {
 		r, err = regexp.Compile(filter)
 		if err != nil {
-			err = fmt.Errorf("Error compiling filter regex '%s': %v", filter, err)
+			err = fmt.Errorf("error compiling filter regex '%s': %v", filter, err)
 			return
 		}
 

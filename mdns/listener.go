@@ -68,7 +68,7 @@ func getCM4(config Config, ifs []*net.Interface) ([]*ipv4.ControlMessage, error)
 	if config.ListenIP != "" {
 		ip = net.ParseIP(config.ListenIP)
 		if ip == nil {
-			return nil, fmt.Errorf("Couldn't parse listen-ip: %s", config.ListenIP)
+			return nil, fmt.Errorf("couldn't parse listen-ip: %s", config.ListenIP)
 		}
 	}
 	for i := range ifs {
