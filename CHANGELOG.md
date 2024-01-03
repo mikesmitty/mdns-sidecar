@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.13...v0.7.0) (2023-12-30)
+
+
+### Features
+
+* switch from nats to mqtt server as backend ([#50](https://github.com/mikesmitty/mdns-mesh/issues/50)) ([7f67e73](https://github.com/mikesmitty/mdns-mesh/commit/7f67e732e9092ee24551dbf2ba5b3115c9cd8e97))
+
+
+### Bug Fixes
+
+* handle empty uri path without panic ([#52](https://github.com/mikesmitty/mdns-mesh/issues/52)) ([2adeddb](https://github.com/mikesmitty/mdns-mesh/commit/2adeddbfde71aa514bf065a72c355e0546055eba))
+
 ## [0.6.13](https://github.com/mikesmitty/mdns-mesh/compare/v0.6.12...v0.6.13) (2023-12-19)
 
 
