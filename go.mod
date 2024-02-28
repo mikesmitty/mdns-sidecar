@@ -1,6 +1,6 @@
 module github.com/mikesmitty/mdns-mesh
 
-go 1.21.6
+go 1.22.0
 
 require (
 	github.com/denisbrodbeck/machineid v1.0.1
