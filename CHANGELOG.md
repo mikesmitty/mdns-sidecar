@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.8](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.7...v0.7.8) (2024-06-03)
+
+
+### Bug Fixes
+
+* **deps:** Update module github.com/spf13/viper to v1.19.0 ([#74](https://github.com/mikesmitty/mdns-mesh/issues/74)) ([d2533ee](https://github.com/mikesmitty/mdns-mesh/commit/d2533eeb238542045f157ab8a0075f70a41c8e27))
+
 ## [0.7.7](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.6...v0.7.7) (2024-05-25)
 
 
