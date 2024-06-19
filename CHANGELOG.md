@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.10](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.9...v0.7.10) (2024-06-19)
+
+
+### Bug Fixes
+
+* **deps:** Update module github.com/miekg/dns to v1.1.61 ([#79](https://github.com/mikesmitty/mdns-mesh/issues/79)) ([c7555ed](https://github.com/mikesmitty/mdns-mesh/commit/c7555ed1a3f34ab7f4d0c85bcc99861523cf9bd9))
+
 ## [0.7.9](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.8...v0.7.9) (2024-06-07)
 
 
