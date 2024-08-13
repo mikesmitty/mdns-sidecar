@@ -5,7 +5,7 @@ go 1.22.6
 require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/eclipse/paho.mqtt.golang v1.5.0
-	github.com/miekg/dns v1.1.61
+	github.com/miekg/dns v1.1.62
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
