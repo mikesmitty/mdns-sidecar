@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.14](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.13...v0.7.14) (2024-10-03)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency go to v1.23.2 ([#91](https://github.com/mikesmitty/mdns-mesh/issues/91)) ([caa8840](https://github.com/mikesmitty/mdns-mesh/commit/caa8840f3268d044ead23571bf71138d10000ad3))
+
 ## [0.7.13](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.12...v0.7.13) (2024-09-07)
 
 
