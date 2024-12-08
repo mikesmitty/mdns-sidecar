@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.18](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.17...v0.7.18) (2024-12-08)
+
+
+### Bug Fixes
+
+* **deps:** Update alpine Docker tag to v3.21 ([#102](https://github.com/mikesmitty/mdns-mesh/issues/102)) ([9a5082c](https://github.com/mikesmitty/mdns-mesh/commit/9a5082c34ad16f6d286238e42ccce265522226d8))
+* **deps:** Update dependency go to v1.23.4 ([#100](https://github.com/mikesmitty/mdns-mesh/issues/100)) ([1f4dfb0](https://github.com/mikesmitty/mdns-mesh/commit/1f4dfb0162a2c0a395875863f8fa7551a3b83e5e))
+* **deps:** Update Go modules ([#101](https://github.com/mikesmitty/mdns-mesh/issues/101)) ([5f21b96](https://github.com/mikesmitty/mdns-mesh/commit/5f21b964cbefd6ba91b753d31b5d351394711673))
+
 ## [0.7.17](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.16...v0.7.17) (2024-11-13)
 
 
