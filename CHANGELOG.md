@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.19](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.18...v0.7.19) (2024-12-19)
+
+
+### Bug Fixes
+
+* **deps:** Update module golang.org/x/net to v0.33.0 [SECURITY] ([#104](https://github.com/mikesmitty/mdns-mesh/issues/104)) ([8b381f9](https://github.com/mikesmitty/mdns-mesh/commit/8b381f9346fd3b22f30b076b04a9a78b5be333fa))
+
 ## [0.7.18](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.17...v0.7.18) (2024-12-08)
 
 
