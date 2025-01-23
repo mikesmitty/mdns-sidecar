@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.20](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.19...v0.7.20) (2025-01-23)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency go to v1.23.5 ([#107](https://github.com/mikesmitty/mdns-mesh/issues/107)) ([6cf8196](https://github.com/mikesmitty/mdns-mesh/commit/6cf81964059c6c7ef0f7f52a4ee7a25e41c547fc))
+* **deps:** Update Go modules ([#106](https://github.com/mikesmitty/mdns-mesh/issues/106)) ([0f6887f](https://github.com/mikesmitty/mdns-mesh/commit/0f6887ff8b9578d42d9fc66b8e34223cc8ebcd26))
+
 ## [0.7.19](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.18...v0.7.19) (2024-12-19)
 
 
