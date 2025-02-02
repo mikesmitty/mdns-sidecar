@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.22](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.21...v0.7.22) (2025-02-02)
+
+
+### Bug Fixes
+
+* **deps:** Update module github.com/spf13/pflag to v1.0.6 ([#111](https://github.com/mikesmitty/mdns-mesh/issues/111)) ([0239789](https://github.com/mikesmitty/mdns-mesh/commit/02397897c3edde0de75825724d208bcb3db4f02a))
+
 ## [0.7.21](https://github.com/mikesmitty/mdns-mesh/compare/v0.7.20...v0.7.21) (2025-01-26)
 
 
